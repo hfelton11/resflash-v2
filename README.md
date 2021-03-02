@@ -32,9 +32,12 @@ $ pypy --version
 Python 2.7.13 (?, Sep 30 2020, 23:12:46)
 \[PyPy 7.3.1 with GCC OpenBSD Clang 10.0.1 \]
 
-$ doas ln -sf /usr/local/bin/pip2.7 /usr/local/bin/pip
-
+$ doas ln -sf /usr/local/bin/pip2.7 /usr/local/bin/pip   ...AND...
 $ doas ln -sf /usr/local/bin/python2 /usr/local/bin/python
 
-$ virtualenv --prompt=rf2 resflash2-python2   ...OR...
-$ virtualenv --prompt=rf2p resflash2-pypy
+$ virtualenv --prompt=rf2_ resflash2-python2   ...AND/OR...
+$ virtualenv --prompt=rf2p_ resflash2-pypy
+
+$ . resflash2-python2/bin/activate   ...GETS...
+rf2_$        (ready to do python work)
+
