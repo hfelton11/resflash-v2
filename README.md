@@ -21,7 +21,7 @@ which currently has perl as v5.30.3 as its default language-of-choice...  sigh..
 apparently python-2.7.18p0 comes standard under the name python2...
 just to be safe-ish, i might want to run everything under pypy (https://www.pypy.org/)...
 
-$ doas pkg_add pypy
+$ doas pkg_add pypy py-pip py-virtualenv
 
 $ python2 --version
 
@@ -32,4 +32,9 @@ $ pypy --version
 Python 2.7.13 (?, Sep 30 2020, 23:12:46)
 \[PyPy 7.3.1 with GCC OpenBSD Clang 10.0.1 \]
 
+$ doas ln -sf /usr/local/bin/pip2.7 /usr/local/bin/pip
 
+$ doas ln -sf /usr/local/bin/python2 /usr/local/bin/python
+
+$ virtualenv --prompt=rf2 resflash2-python2   ...OR...
+$ virtualenv --prompt=rf2p resflash2-pypy
