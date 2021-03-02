@@ -14,33 +14,22 @@ IV - allow other known-disks (/fs3, etc) to be swapped in for mounting at / upon
 
 in theory this can/should be done as portable-shell scripting,
 but we will use python since odds-are there will be some higher-order
-programming involved and it will be handy to have a full-language available.
+programming involved and it will be handy to have a full-language available...
 
 for now, i will base this upon the openbsd (https://www.openbsd.org/) v.6.8-stable
 which currently has perl as v5.30.3 as its default language-of-choice...  sigh...
-
-$ doas pkg_add python
-
-the two current options are v.3.7.10 or v.3.8.6p1
-okay, whatever happened to python2 ???  apparently politics and dumb-luck for obsd6.8
-(https://www.unitedbsd.com/d/298-a-sad-day-for-bsd-and-python/30)
-
-$ pkg_info -a -Q python | grep 2
-
-apparently there is still some 2.7 stuff floating around, particularly for pypy
-
-$ locate python | grep \/bin\/
-
-ok - apparently regular python2 is "just THERE" under v.2.7.18p0...
-
-$ python2 --version
-
-Python 2.7.18    (...DOH...)
+apparently python-2.7.18p0 comes standard under the name python2...
+just to be safe-ish, i might want to run everything under pypy (https://www.pypy.org/)...
 
 $ doas pkg_add pypy
 
-added pypy-7.3.1 just fine (if needed)...
+$ python2 --version
 
-according to pypy.org, the supported pythons are (2.7.13 and 3.6.9) - cool...
+Python 2.7.18
+
+$ pypy --version
+
+Python 2.7.13 (?, Sep 30 2020, 23:12:46)
+\[PyPy 7.3.1 with GCC OpenBSD Clang 10.0.1 \]
 
 
