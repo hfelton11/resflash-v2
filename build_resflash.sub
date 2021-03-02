@@ -1,0 +1,105 @@
+#!/bin/sh
+
+# Subroutines for build_resflash.sh
+# Copyright Brian Conway <bconway@rcesoftware.com>, see resflash-PERMISSION for details
+
+usage_and_exit() {
+  ${ESCECHO} 'usage: build_resflash.sh [-hinV] [-p pkg_dir] [--part_p sdX]\n' \
+  '                        [--pkg_list pkg1,pkg2] [--pkg_path path1:path2]\n' \
+  '                        [-s com0_speed] [--swap reserve_swap_in_mb]\n' \
+  '                        img_size_in_mb openbsd_base_dir'
+  exit 1
+}
+
+# Args: 1 - basedir, 2 - imgsizemb, 3 - swapsizemb
+# Assigns: imgsizereqkb, fssizekb
+calc_fs_img_sizes() {
+  # Minimum filesystem size, leave 25% headroom for fw_update, packages, other
+  minfssizekb=$(($(du -ks ${1}|awk -safe '{ print $1 }') * 4 / 3))
+
+  # Set img size requirements in KB: 32 MB DOS + /mbr, optional swap, two /,
+  # 100 MB /cfg + 2 MB headroom
+  imgsizereqkb=$((32 * 1024 + ${3} * 1024 + minfssizekb * 2 + 102 * 1024))
+
+  # Calculate / sizes based on available room in image, with 1 MB headroom each
+  fssizekb=$(((${2} - 32 - ${3} - 102) * 1024 / 2))
+}
+
+# Args: 1 - basedir, 2 - imgsizemb, 3 - swapsizemb
+# Assigns: MACHINE, CROSSARCH
+validate_base_dir() {
+  fail=0
+  echo "Validating OpenBSD base dir: ${1}"
+
+  if [ ! -f ${1}/bsd ] && [ ! -f ${1}/bsd.d -o ! -f ${1}/bsd.e ]; then
+    fail=1
+    echo "/bsd missing from ${1}, a kernel is required."
+  fi
+
+  if [ ! -f ${1}/dev/MAKEDEV ]; then
+    fail=1
+    echo "Missing some base files from ${1}, baseXY.tgz was not unpacked."
+  fi
+
+  if [ ! -f ${1}/etc/login.conf ]; then
+    fail=1
+    echo "Missing some /etc files, ${1}/var/sysmerge/etc.tgz was not unpacked."
+  fi
+
+  if [ -f ${1}/usr/bin/su ] && \
+     [ ! -O ${1}/usr/bin/su -o ! -u ${1}/usr/bin/su ]; then
+    fail=1
+    echo "Incorrect permissions found, baseXY.tgz must be unpacked as root" \
+         "using 'tar zxfph set.tgz'."
+  fi
+
+  # Inspect kernel and su to verify matching arches and set MACHINE
+
+  if file ${1}/bsd*|grep -q x86-64 && \
+     file ${1}/usr/bin/su|grep -q x86-64; then
+    MACHINE=amd64
+  elif file ${1}/bsd*|grep -q Intel\ 80386 && \
+       file ${1}/usr/bin/su|grep -q Intel\ 80386; then
+    MACHINE=i386
+  elif file ${1}/bsd*|grep -q MIPS-III && \
+       file ${1}/usr/bin/su|grep -q MIPS-III; then
+    MACHINE=octeon
+  else
+    fail=1
+    MACHINE=unknown
+    echo 'Mixed kernel and userland arches or unsupported arch.'
+  fi
+
+  # Validate for cross-arch use
+
+  CROSSARCH=0
+  if [ ${MACHINE} != $(machine) ]; then
+    CROSSARCH=1
+  fi
+
+  if [ -n "${pkgdir+1}" ] || [ -n "${pkglist+1}" ] && \
+     [ ${CROSSARCH} -eq 1 ]; then
+    fail=1
+    echo 'Cross-arch builds do not support package installation at build time.'
+  fi
+
+  if [ ${CROSSARCH} -eq 1 ] && ! grep -q "$(uname -s -r)" ${1}/var/mail/root
+  then
+    fail=1
+    echo 'Cross-arch builds must use the same OpenBSD version as build system.'
+  fi
+
+  # Check for enough space
+
+  calc_fs_img_sizes ${1} ${2} ${3}
+  if [ ${imgsizereqkb} -gt $((${2} * 1024)) ]; then
+    fail=1
+    echo "Disk image size is too small for the required filesystems, at least" \
+         "$((imgsizereqkb / 1024)) MB needed."
+  fi
+
+  if [ ${fail} -eq 1 ]; then
+    exit 1
+  fi
+}
+
