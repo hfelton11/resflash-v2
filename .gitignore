@@ -108,6 +108,7 @@ env/
 venv/
 resflash2-python2/
 resflash2-pypy/
+old-usb/
 ENV/
 env.bak/
 venv.bak/
